@@ -4,19 +4,30 @@
 using namespace geode::prelude;
 
 class $modify(PlayerObject) {
+    // Usamos updatePlayerFrame para forzar la rotación visual
     void updatePlayerFrame(int frame) {
         PlayerObject::updatePlayerFrame(frame);
 
-        // m_isSwing detecta si estamos en el modo Swing
         if (this->m_isSwing) {
-            // m_mainLayer es el nodo principal que contiene los sprites del icono
-            if (auto layer = this->m_mainLayer) {
+            // Buscamos el objeto visual principal (m_iconSprite)
+            if (auto icon = this->m_iconSprite) {
                 if (this->m_isUpsideDown) {
-                    layer->setScaleY(-1.0f);
+                    // En gravedad invertida, sumamos 180 grados a la rotación actual
+                    // O simplemente forzamos la inversión visual
+                    icon->setFlipY(true);
                 } else {
-                    layer->setScaleY(1.0f);
+                    icon->setFlipY(false);
                 }
             }
+        }
+    }
+
+    // También nos aseguramos de que al cambiar de gravedad se actualice
+    void flipGravity(bool upsideDown, bool p1) {
+        PlayerObject::flipGravity(upsideDown, p1);
+        
+        if (this->m_isSwing && this->m_iconSprite) {
+            this->m_iconSprite->setFlipY(upsideDown);
         }
     }
 };
