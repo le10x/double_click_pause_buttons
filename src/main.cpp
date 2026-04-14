@@ -8,10 +8,12 @@ class $modify(PlayerObject) {
         PlayerObject::updatePlayerFrame(frame);
 
         if (this->m_isSwing) {
-            if (this->m_isUpsideDown) {
-                this->setScaleY(-1.0f);
-            } else {
-                this->setScaleY(1.0f);
+            if (auto holder = this->m_iconSpriteHolder) {
+                if (this->m_isUpsideDown) {
+                    holder->setScaleY(-1.0f);
+                } else {
+                    holder->setScaleY(1.0f);
+                }
             }
         }
     }
