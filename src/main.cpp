@@ -1,35 +1,38 @@
 #include <Geode/Geode.hpp>
-#include <Geode/modify/PlayerObject.hpp>
+#include <Geode/modify/PauseLayer.hpp>
+#include <chrono> // Necesario para medir el tiempo
 
 using namespace geode::prelude;
 
-class $modify(PlayerObject) {
-    void updatePlayerFrame(int frame) {
-        PlayerObject::updatePlayerFrame(frame);
+class $modify(MyPauseLayer, PauseLayer) {
+    struct Fields {
+        int m_clickCount = 0;
+        // Guardamos el momento exacto del último clic
+        std::chrono::system_clock::time_point m_lastClickTime;
+    };
 
-        if (this->m_isSwing) {
-            bool upsideDown = this->m_isUpsideDown;
-            
-            // 1. Invertimos el sprite base del icono
-            if (this->m_iconSprite) {
-                this->m_iconSprite->setFlipY(upsideDown);
-            }
-            
-            // 2. Invertimos el brillo (Glow) para que no se duplique/desfase
-            if (this->m_iconGlow) {
-                this->m_iconGlow->setFlipY(upsideDown);
-            }
+    void onResume(CCObject* sender) {
+        auto ahora = std::chrono::system_clock::now();
+        
+        // Calculamos cuánto tiempo pasó desde el último clic (en milisegundos)
+        auto tiempoTranscurrido = std::chrono::duration_cast<std::chrono::milliseconds>(
+            ahora - m_fields->m_lastClickTime
+        ).count();
 
-            // 3. Invertimos el contenedor del vehículo (el Swing en sí)
-            if (this->m_vehicleSprite) {
-                this->m_vehicleSprite->setFlipY(upsideDown);
-            }
+        // Si pasó más de 500ms (medio segundo), reiniciamos el contador
+        if (tiempoTranscurrido > 500) {
+            m_fields->m_clickCount = 0;
+        }
 
-            // Si notas que el icono se "hunde", ajustamos el offset visual
-            if (upsideDown) {
-                // Ajuste fino por si el punto de anclaje lo mueve
-                // this->m_iconSprite->setPositionY(-1.0f); 
-            }
+        m_fields->m_clickCount++;
+        m_fields->m_lastClickTime = ahora; // Actualizamos el tiempo del último clic
+
+        if (m_fields->m_clickCount >= 2) {
+            PauseLayer::onResume(sender);
+        } else {
+            // Feedback visual de que necesita otro clic rápido
+            auto notification = Notification::create("¡Rápido! Haz clic otra vez", NotificationIcon::None, 0.5f);
+            notification->show();
         }
     }
 };
