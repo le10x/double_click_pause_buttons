@@ -1,25 +1,9 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PauseLayer.hpp>
-#include <Geode/modify/SettingV3.hpp> // Para detectar cambios en ajustes
 #include <chrono>
+#include <functional>
 
 using namespace geode::prelude;
-
-// --- Lógica de Vista Previa al cambiar ajustes ---
-class $modify(MySettings, SettingV3) {
-    void dispatchChanged() {
-        SettingV3::dispatchChanged();
-        
-        // Si el usuario está en el menú de pausa y cambia algo, mostramos preview
-        if (auto pauseLayer = CCScene::get()->getChildByType<PauseLayer>(0)) {
-            auto label = CCLabelBMFont::create("Preview Updated!", "bigFont.fnt");
-            label->setPosition(CCDirector::get()->getWinSize() / 2);
-            label->setScale(0.5f);
-            pauseLayer->addChild(label);
-            label->runAction(CCSequence::create(CCFadeOut::create(1.0f), CCRemoveSelf::create(), nullptr));
-        }
-    }
-};
 
 class $modify(MyPauseLayer, PauseLayer) {
     struct Fields {
@@ -68,12 +52,18 @@ class $modify(MyPauseLayer, PauseLayer) {
             if (Mod::get()->getSettingValue<bool>("show-message")) {
                 std::string texto = Mod::get()->getSettingValue<std::string>("custom-text");
                 bool gold = Mod::get()->getSettingValue<bool>("use-gold-font");
+                int64_t opacityPercent = Mod::get()->getSettingValue<int64_t>("message-opacity");
                 
                 auto label = CCLabelBMFont::create(texto.c_str(), gold ? "goldFont.fnt" : "bigFont.fnt");
                 auto winSize = CCDirector::get()->getWinSize();
+                
                 label->setPosition({winSize.width / 2, winSize.height / 2 - 60});
                 label->setScale(0.5f);
                 label->setTag(69420);
+                
+                // Convertir 0-100 a 0-255 para Cocos2d-x
+                GLubyte opacityValue = static_cast<GLubyte>((opacityPercent * 255) / 100);
+                label->setOpacity(opacityValue);
                 
                 this->removeChildByTag(69420);
                 this->addChild(label);
@@ -92,8 +82,6 @@ class $modify(MyPauseLayer, PauseLayer) {
     void onQuit(CCObject* s) { handleSafeClick(s, "lock-exit", [this](CCObject* o) { PauseLayer::onQuit(o); }); }
     void onRestart(CCObject* s) { handleSafeClick(s, "lock-reset", [this](CCObject* o) { PauseLayer::onRestart(o); }); }
     void onRestartFull(CCObject* s) { handleSafeClick(s, "lock-reset-plat", [this](CCObject* o) { PauseLayer::onRestartFull(o); }); }
-    
-    // Unificados: Ambos usan "lock-practice-all"
     void onPracticeMode(CCObject* s) { handleSafeClick(s, "lock-practice-all", [this](CCObject* o) { PauseLayer::onPracticeMode(o); }); }
     void onNormalMode(CCObject* s) { handleSafeClick(s, "lock-practice-all", [this](CCObject* o) { PauseLayer::onNormalMode(o); }); }
 };
