@@ -1,8 +1,25 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PauseLayer.hpp>
+#include <Geode/modify/SettingV3.hpp> // Para detectar cambios en ajustes
 #include <chrono>
 
 using namespace geode::prelude;
+
+// --- Lógica de Vista Previa al cambiar ajustes ---
+class $modify(MySettings, SettingV3) {
+    void dispatchChanged() {
+        SettingV3::dispatchChanged();
+        
+        // Si el usuario está en el menú de pausa y cambia algo, mostramos preview
+        if (auto pauseLayer = CCScene::get()->getChildByType<PauseLayer>(0)) {
+            auto label = CCLabelBMFont::create("Preview Updated!", "bigFont.fnt");
+            label->setPosition(CCDirector::get()->getWinSize() / 2);
+            label->setScale(0.5f);
+            pauseLayer->addChild(label);
+            label->runAction(CCSequence::create(CCFadeOut::create(1.0f), CCRemoveSelf::create(), nullptr));
+        }
+    }
+};
 
 class $modify(MyPauseLayer, PauseLayer) {
     struct Fields {
@@ -11,26 +28,9 @@ class $modify(MyPauseLayer, PauseLayer) {
         std::chrono::system_clock::time_point m_lastClickTime;
     };
 
-    // Corregido: Ahora acepta el argumento 'unfocused'
     bool init(bool unfocused) {
         if (!PauseLayer::init(unfocused)) return false;
-
-        if (Mod::get()->getSettingValue<bool>("enable-opacity")) {
-            this->applyOpacityToButtons(180); 
-        }
         return true;
-    }
-
-    void applyOpacityToButtons(uint8_t opacity) {
-        const char* buttons[] = {"exit-button", "restart-button", "practice-button"};
-        for (const char* id : buttons) {
-            if (auto btn = this->getChildByIDRecursive(id)) {
-                // Corregido: Cast a CCRGBAProtocol para poder usar setOpacity
-                if (auto rgba = typeinfo_cast<CCRGBAProtocol*>(btn)) {
-                    rgba->setOpacity(opacity);
-                }
-            }
-        }
     }
 
     void handleSafeClick(CCObject* sender, std::string_view settingKey, std::function<void(CCObject*)> originalFunc) {
@@ -41,21 +41,20 @@ class $modify(MyPauseLayer, PauseLayer) {
 
         auto playLayer = PlayLayer::get();
         if (playLayer && !playLayer->m_isPlatformer) {
-            int64_t minPercent = Mod::get()->getSettingValue<int64_t>("min-percent");
-            if (playLayer->getCurrentPercent() < static_cast<double>(minPercent)) {
+            auto minPercent = Mod::get()->getSettingValue<int64_t>("min-percent");
+            if (static_cast<int>(playLayer->getCurrentPercent()) < static_cast<int>(minPercent)) {
                 originalFunc(sender);
                 return;
             }
         }
 
         auto ahora = std::chrono::system_clock::now();
-        int64_t speedLimit = Mod::get()->getSettingValue<int64_t>("click-speed");
+        auto speedLimit = Mod::get()->getSettingValue<int64_t>("click-speed");
         auto tiempoTranscurrido = std::chrono::duration_cast<std::chrono::milliseconds>(ahora - m_fields->m_lastClickTime).count();
 
         if (m_fields->m_lastButton != sender || tiempoTranscurrido > speedLimit) {
             m_fields->m_clickCount = 0;
             this->removeChildByTag(69420);
-            if (Mod::get()->getSettingValue<bool>("enable-opacity")) this->applyOpacityToButtons(180);
         }
 
         m_fields->m_clickCount++;
@@ -66,11 +65,6 @@ class $modify(MyPauseLayer, PauseLayer) {
             m_fields->m_clickCount = 0;
             originalFunc(sender);
         } else {
-            // Corregido: Cast para opacidad en el botón presionado
-            if (auto rgba = typeinfo_cast<CCRGBAProtocol*>(sender)) {
-                rgba->setOpacity(255);
-            }
-
             if (Mod::get()->getSettingValue<bool>("show-message")) {
                 std::string texto = Mod::get()->getSettingValue<std::string>("custom-text");
                 bool gold = Mod::get()->getSettingValue<bool>("use-gold-font");
@@ -85,7 +79,7 @@ class $modify(MyPauseLayer, PauseLayer) {
                 this->addChild(label);
                 
                 label->runAction(CCSequence::create(
-                    CCEaseExponentialOut::create(CCScaleTo::create(0.2f, 0.6f)),
+                    CCEaseExponentialOut::create(CCScaleTo::create(0.2f, 0.55f)),
                     CCDelayTime::create(0.4f),
                     CCFadeOut::create(0.2f),
                     CCRemoveSelf::create(),
@@ -98,6 +92,8 @@ class $modify(MyPauseLayer, PauseLayer) {
     void onQuit(CCObject* s) { handleSafeClick(s, "lock-exit", [this](CCObject* o) { PauseLayer::onQuit(o); }); }
     void onRestart(CCObject* s) { handleSafeClick(s, "lock-reset", [this](CCObject* o) { PauseLayer::onRestart(o); }); }
     void onRestartFull(CCObject* s) { handleSafeClick(s, "lock-reset-plat", [this](CCObject* o) { PauseLayer::onRestartFull(o); }); }
-    void onPracticeMode(CCObject* s) { handleSafeClick(s, "lock-practice", [this](CCObject* o) { PauseLayer::onPracticeMode(o); }); }
-    void onNormalMode(CCObject* s) { handleSafeClick(s, "lock-exit-practice", [this](CCObject* o) { PauseLayer::onNormalMode(o); }); }
+    
+    // Unificados: Ambos usan "lock-practice-all"
+    void onPracticeMode(CCObject* s) { handleSafeClick(s, "lock-practice-all", [this](CCObject* o) { PauseLayer::onPracticeMode(o); }); }
+    void onNormalMode(CCObject* s) { handleSafeClick(s, "lock-practice-all", [this](CCObject* o) { PauseLayer::onNormalMode(o); }); }
 };
