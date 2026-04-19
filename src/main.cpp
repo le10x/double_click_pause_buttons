@@ -1,8 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PauseLayer.hpp>
 #include <chrono>
-#include <functional>
-#include <algorithm> // Para std::clamp
+#include <algorithm>
 
 using namespace geode::prelude;
 
@@ -15,7 +14,35 @@ class $modify(MyPauseLayer, PauseLayer) {
 
     bool init(bool unfocused) {
         if (!PauseLayer::init(unfocused)) return false;
+
+        auto winSize = CCDirector::get()->getWinSize();
+        int64_t posMode = Mod::get()->getSettingValue<int64_t>("settings-btn-pos");
+
+        if (posMode != 0) { // 0 es desactivado
+            auto sprite = CCSprite::createWithSpriteFrameName("GJ_optionsBtn_001.png");
+            sprite->setScale(0.7f);
+            
+            auto btn = CCMenuItemSpriteExtra::create(
+                sprite, this, menu_selector(MyPauseLayer::onOpenMySettings)
+            );
+
+            auto menu = CCMenu::create();
+            if (posMode == 1) { // Izquierda
+                menu->setPosition({30, 30});
+            } else { // Derecha
+                menu->setPosition({winSize.width - 30, 30});
+            }
+
+            menu->addChild(btn);
+            menu->setID("settings-shortcut-menu");
+            this->addChild(menu);
+        }
+
         return true;
+    }
+
+    void onOpenMySettings(CCObject*) {
+        geode::openSettings(Mod::get());
     }
 
     void handleSafeClick(CCObject* sender, std::string_view settingKey, std::function<void(CCObject*)> originalFunc) {
@@ -26,21 +53,19 @@ class $modify(MyPauseLayer, PauseLayer) {
 
         auto playLayer = PlayLayer::get();
         if (playLayer && !playLayer->m_isPlatformer) {
-            // Leemos el valor y lo limitamos entre 0 y 100 por seguridad
-            int64_t rawPercent = Mod::get()->getSettingValue<int64_t>("min-percent");
-            int minPercent = std::clamp(static_cast<int>(rawPercent), 0, 100);
-
-            if (static_cast<int>(playLayer->getCurrentPercent()) < minPercent) {
+            int minP = std::clamp(static_cast<int>(Mod::get()->getSettingValue<int64_t>("min-percent")), 0, 100);
+            if (static_cast<int>(playLayer->getCurrentPercent()) < minP) {
                 originalFunc(sender);
                 return;
             }
         }
 
         auto ahora = std::chrono::system_clock::now();
-        int64_t speedLimit = Mod::get()->getSettingValue<int64_t>("click-speed");
-        auto tiempoTranscurrido = std::chrono::duration_cast<std::chrono::milliseconds>(ahora - m_fields->m_lastClickTime).count();
+        // Bloqueo de seguridad: máximo 1000ms
+        int speedLimit = std::clamp(static_cast<int>(Mod::get()->getSettingValue<int64_t>("click-speed")), 100, 1000);
+        auto tiempo = std::chrono::duration_cast<std::chrono::milliseconds>(ahora - m_fields->m_lastClickTime).count();
 
-        if (m_fields->m_lastButton != sender || tiempoTranscurrido > speedLimit) {
+        if (m_fields->m_lastButton != sender || tiempo > speedLimit) {
             m_fields->m_clickCount = 0;
             this->removeChildByTag(69420);
         }
@@ -56,20 +81,13 @@ class $modify(MyPauseLayer, PauseLayer) {
             if (Mod::get()->getSettingValue<bool>("show-message")) {
                 std::string texto = Mod::get()->getSettingValue<std::string>("custom-text");
                 bool gold = Mod::get()->getSettingValue<bool>("use-gold-font");
-                
-                // Limitamos opacidad también entre 0 y 100
-                int64_t rawOpacity = Mod::get()->getSettingValue<int64_t>("message-opacity");
-                int opacityPercent = std::clamp(static_cast<int>(rawOpacity), 0, 100);
+                int opc = std::clamp(static_cast<int>(Mod::get()->getSettingValue<int64_t>("message-opacity")), 0, 100);
                 
                 auto label = CCLabelBMFont::create(texto.c_str(), gold ? "goldFont.fnt" : "bigFont.fnt");
-                auto winSize = CCDirector::get()->getWinSize();
-                
-                label->setPosition({winSize.width / 2, winSize.height / 2 - 60});
+                label->setPosition({CCDirector::get()->getWinSize().width / 2, CCDirector::get()->getWinSize().height / 2 - 60});
                 label->setScale(0.5f);
                 label->setTag(69420);
-                
-                GLubyte opacityValue = static_cast<GLubyte>((opacityPercent * 255) / 100);
-                label->setOpacity(opacityValue);
+                label->setOpacity(static_cast<GLubyte>((opc * 255) / 100));
                 
                 this->removeChildByTag(69420);
                 this->addChild(label);
