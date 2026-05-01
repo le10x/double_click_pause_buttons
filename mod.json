@@ -1,34 +1,37 @@
 {
-    "geode": "5.6.1",
-    "gd": {
-        "win": "2.2081",
-        "android": "2.2081",
-        "mac": "2.2081",
-        "ios": "2.2081"
-    },
-    "id": "le10x.double_click_pause_buttons",
-    "name": "Double Click Pause Buttons",
-    "developer": "le10x",
-    "version": "v1.0.0",
-    "description": "A mod that requires quick clicking to activate the pause menu buttons!",
-    "repository": "https://github.com",
-    "settings": {
-       "show-message": { "name": "Show Confirmation Message", "type": "bool", "default": true },
-        "custom-text": { "name": "Custom Message Text", "type": "string", "default": "Click again to confirm" },
-        "message-opacity": { "name": "Message Opacity", "type": "int", "default": 100, "min": 0, "max": 100, "control": "slider" },
-        "use-gold-font": { "name": "Use Gold Font", "type": "bool", "default": false },
-        "click-speed": { "name": "Double Tap Speed (ms)", "type": "int", "default": 500, "min": 100, "max": 1000, "control": "slider" },
-        "min-percent": { "name": "Min Percent Activation", "type": "int", "default": 0, "min": 0, "max": 100, "control": "slider" },
-        "settings-btn-pos": { 
-            "name": "Settings Button Position", 
-            "type": "int", 
-            "default": 1,
-            "one-of": [0, 1, 2],
-            "controls": "arrows"
-        },
-        "lock-exit": { "name": "Protect Exit Button", "type": "bool", "default": true },
-        "lock-reset": { "name": "Protect Reset Button", "type": "bool", "default": true },
-        "lock-practice-all": { "name": "Protect Practice Buttons", "type": "bool", "default": false },
-        "lock-reset-plat": { "name": "Protect Reset All (Plat)", "type": "bool", "default": false }
-    }
+	"geode": "5.6.1",
+	"gd": {
+		"win": "2.2081",
+		"android": "2.2081"
+	},
+	"id": "le10x_double_click_exit",
+	"version": "1.0.0",
+	"name": "Double Click Exit",
+	"developer": "le10x",
+	"description": "Requires a double click to exit the pause menu.",
+	"settings": {
+		"enable-confirm": {
+			"name": "Enable Confirmation",
+			"description": "Show a message before exiting.",
+			"type": "bool",
+			"default": true
+		},
+		"custom-text": {
+			"name": "Custom Message",
+			"description": "The text to show on the first click.",
+			"type": "string",
+			"default": "Click again to exit"
+		},
+		"click-speed": {
+			"name": "Click Speed (ms)",
+			"description": "Max time between clicks (0-1000ms).",
+			"type": "int",
+			"default": 500,
+			"min": 0,
+			"max": 1000,
+			"control": {
+				"slider": true
+			}
+		}
+	}
 }
