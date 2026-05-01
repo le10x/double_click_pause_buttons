@@ -8,7 +8,7 @@ else()
 endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-project(DoubleClickPauseButtons VERSION 1.0.0)
+project(DoubleClickExit VERSION 1.0.0)
 
 add_library(${PROJECT_NAME} SHARED
     src/main.cpp
