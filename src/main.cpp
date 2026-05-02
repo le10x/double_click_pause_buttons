@@ -10,29 +10,29 @@ class $modify(PauseDoubleClick, PauseLayer) {
         bool m_isNotifying = false;
     };
 
-    // 1. Cuando se crea el menú de pausa...
-    bool init() {
-        if (!PauseLayer::init()) return false;
+    // CORRECCIÓN: Ahora recibimos el parámetro 'unfocused'
+    bool init(bool unfocused) {
+        // Pasamos el parámetro a la función original
+        if (!PauseLayer::init(unfocused)) return false;
 
-        // Buscamos el botón de salir entre los nodos
-        // El botón de salir en el menú de pausa suele tener este selector originalmente
-        auto menu = this->getChildByID("left-button-menu");
-        if (menu) {
+        // Buscamos el botón de salir. En 2.2081 los IDs pueden variar, 
+        // así que lo buscamos de forma segura.
+        if (auto menu = this->getChildByID("left-button-menu")) {
             if (auto exitBtn = static_cast<CCMenuItemSpriteExtra*>(menu->getChildByID("exit-button"))) {
-                // AQUÍ ESTÁ EL TRUCO: Cambiamos la función que se ejecuta al darle clic
-                // En lugar de llamar a la de RobTop, llamará a nuestra 'onCustomQuit'
                 exitBtn->setTarget(this, menu_selector(PauseDoubleClick::onCustomQuit));
             }
         }
         return true;
     }
 
-    // 2. Nuestra función personalizada para el botón
     void onCustomQuit(CCObject* sender) {
         auto mod = Mod::get();
-        bool isPlat = PlayLayer::get() && PlayLayer::get()->m_level->isPlatformer();
+        bool isPlat = false;
+        
+        if (auto playLayer = PlayLayer::get()) {
+            if (playLayer->m_level) isPlat = playLayer->m_level->isPlatformer();
+        }
 
-        // Si el mod no debe actuar, llamamos a la original de RobTop inmediatamente
         if (!mod->getSettingValue<bool>("enable-double-click") || (mod->getSettingValue<bool>("plat-only") && !isPlat)) {
             PauseLayer::onQuit(sender);
             return;
@@ -42,10 +42,8 @@ class $modify(PauseDoubleClick, PauseLayer) {
         auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(ahora - m_fields->m_lastClick).count();
 
         if (diff < mod->getSettingValue<int64_t>("click-speed")) {
-            // SEGUNDO CLIC: Ahora sí liberamos la función original de RobTop
             PauseLayer::onQuit(sender);
         } else {
-            // PRIMER CLIC: Solo guardamos tiempo y notificamos
             m_fields->m_lastClick = ahora;
 
             if (mod->getSettingValue<bool>("show-notification") && !m_fields->m_isNotifying) {
