@@ -10,23 +10,25 @@
 	"version": "1.0.0",
 	"name": "Double Click Exit",
 	"developer": "le10x",
-	"description": "Prevents accidental exits by requiring a double click on the exit button.",
+	"description": "Double click to exit the level.",
+	"repository": "https://github.com/le10x/double_click_exit",
+	"tags": ["utility", "interface", "gameplay"],
 	"settings": {
 		"enable-double-click": {
 			"name": "Enable Double Click",
-			"description": "Toggle the double click requirement on or off.",
+			"description": "Activate the double click setting.",
 			"type": "bool",
 			"default": true
 		},
 		"plat-only": {
 			"name": "Platformer Only",
-			"description": "If enabled, the mod will only work in platformer levels.",
+			"description": "Only activate the double click setting if you are on plats levels.",
 			"type": "bool",
 			"default": false
 		},
 		"show-notification": {
 			"name": "Show Notification",
-			"description": "Show a visual message on the first click.",
+			"description": "A message to remind you to double-click.",
 			"type": "bool",
 			"default": true
 		},
