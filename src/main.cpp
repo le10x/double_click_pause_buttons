@@ -10,11 +10,29 @@ class $modify(PauseDoubleClick, PauseLayer) {
         bool m_isNotifying = false;
     };
 
-    void onQuit(CCObject* sender) {
+    // 1. Cuando se crea el menú de pausa...
+    bool init() {
+        if (!PauseLayer::init()) return false;
+
+        // Buscamos el botón de salir entre los nodos
+        // El botón de salir en el menú de pausa suele tener este selector originalmente
+        auto menu = this->getChildByID("left-button-menu");
+        if (menu) {
+            if (auto exitBtn = static_cast<CCMenuItemSpriteExtra*>(menu->getChildByID("exit-button"))) {
+                // AQUÍ ESTÁ EL TRUCO: Cambiamos la función que se ejecuta al darle clic
+                // En lugar de llamar a la de RobTop, llamará a nuestra 'onCustomQuit'
+                exitBtn->setTarget(this, menu_selector(PauseDoubleClick::onCustomQuit));
+            }
+        }
+        return true;
+    }
+
+    // 2. Nuestra función personalizada para el botón
+    void onCustomQuit(CCObject* sender) {
         auto mod = Mod::get();
         bool isPlat = PlayLayer::get() && PlayLayer::get()->m_level->isPlatformer();
 
-        // Si el mod está desactivado o es modo normal y pediste Plat Only, salir normal
+        // Si el mod no debe actuar, llamamos a la original de RobTop inmediatamente
         if (!mod->getSettingValue<bool>("enable-double-click") || (mod->getSettingValue<bool>("plat-only") && !isPlat)) {
             PauseLayer::onQuit(sender);
             return;
@@ -24,7 +42,7 @@ class $modify(PauseDoubleClick, PauseLayer) {
         auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(ahora - m_fields->m_lastClick).count();
 
         if (diff < mod->getSettingValue<int64_t>("click-speed")) {
-            // SEGUNDO CLIC: Ejecuta la función original (RobTop mostrará su confirmación aquí si está activa)
+            // SEGUNDO CLIC: Ahora sí liberamos la función original de RobTop
             PauseLayer::onQuit(sender);
         } else {
             // PRIMER CLIC: Solo guardamos tiempo y notificamos
@@ -33,8 +51,6 @@ class $modify(PauseDoubleClick, PauseLayer) {
             if (mod->getSettingValue<bool>("show-notification") && !m_fields->m_isNotifying) {
                 m_fields->m_isNotifying = true;
                 Notification::create(mod->getSettingValue<std::string>("custom-text"), NotificationIcon::None, 0.8f)->show();
-                
-                // Reset anti-spam tras 1 seg
                 this->scheduleOnce(schedule_selector(PauseDoubleClick::resetNotif), 1.0f);
             }
         }
