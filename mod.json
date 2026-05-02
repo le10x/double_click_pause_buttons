@@ -40,7 +40,7 @@
 		},
 		"click-speed": {
 			"name": "Click Speed (ms)",
-			"description": "The maximum time allowed between clicks (0 to 1000 milliseconds).",
+			"description": "You can choose the double click time.",
 			"type": "int",
 			"default": 500,
 			"min": 0,
