@@ -8,36 +8,41 @@
 	"version": "1.0.0",
 	"name": "Double Click Exit",
 	"developer": "le10x",
-	"description": "Prevents accidental exits by requiring a double click on the exit button.",
+	"description": "Prevents accidental exits by requiring a double click.",
 	"settings": {
 		"enable-double-click": {
 			"name": "Enable Double Click",
-			"description": "Requires two clicks to trigger the exit action.",
 			"type": "bool",
 			"default": true
 		},
+		"game-mode": {
+			"name": "Game Mode",
+			"type": "enum",
+			"default": "both",
+			"arrows": true,
+			"options": {
+				"both": "Both",
+				"platformer": "Platformer Only",
+				"normal": "Normal Only"
+			}
+		},
 		"show-notification": {
 			"name": "Show Notification",
-			"description": "Show a message on the first click.",
 			"type": "bool",
 			"default": true
 		},
 		"custom-text": {
 			"name": "Custom Message",
-			"description": "Text shown when clicking once.",
 			"type": "string",
 			"default": "Click again to exit"
 		},
 		"click-speed": {
 			"name": "Click Speed (ms)",
-			"description": "Max time between clicks (0-1000ms).",
 			"type": "int",
 			"default": 500,
 			"min": 0,
 			"max": 1000,
-			"control": {
-				"slider": true
-			}
+			"control": { "slider": true }
 		}
 	}
 }
