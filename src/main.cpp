@@ -4,23 +4,20 @@
 
 using namespace geode::prelude;
 
-class $modify(MyExitProtect, PauseLayer) {
+class $modify(PauseDoubleClick, PauseLayer) {
     struct Fields {
         std::chrono::steady_clock::time_point m_lastClick;
+        bool m_isNotifying = false;
     };
 
     void onQuit(CCObject* sender) {
-        // 1. Obtener ajustes del mod.json
-        bool shouldConfirm = Mod::get()->getSettingValue<bool>("enable-confirm");
+        // Leer ajustes
+        bool enableMod = Mod::get()->getSettingValue<bool>("enable-double-click");
+        bool showNotif = Mod::get()->getSettingValue<bool>("show-notification");
         std::string customText = Mod::get()->getSettingValue<std::string>("custom-text");
-        int speedLimit = Mod::get()->getSettingValue<int>("click-speed");
+        int speedLimit = std::clamp(Mod::get()->getSettingValue<int>("click-speed"), 0, 1000);
 
-        // 2. Seguridad: Bloquear si alguien intenta hackear el límite de 1000ms
-        if (speedLimit > 1000) speedLimit = 1000;
-        if (speedLimit < 0) speedLimit = 0;
-
-        // Si la confirmación está desactivada, salimos normal
-        if (!shouldConfirm) {
+        if (!enableMod) {
             PauseLayer::onQuit(sender);
             return;
         }
@@ -28,14 +25,28 @@ class $modify(MyExitProtect, PauseLayer) {
         auto ahora = std::chrono::steady_clock::now();
         auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(ahora - m_fields->m_lastClick).count();
 
-        // 3. Lógica de doble clic
         if (diff < speedLimit) {
+            // ÉXITO: Pasó el doble clic. 
+            // Llamamos al original. Si RobTop tiene "Confirm Exit" activo, 
+            // el juego mostrará su popup AHORA.
             PauseLayer::onQuit(sender);
         } else {
+            // Primer clic o muy lento
             m_fields->m_lastClick = ahora;
-            
-            // Crear notificación visual (menos intrusiva que un popup)
-            Notification::create(customText, NotificationIcon::Info, 1.0f)->show();
+
+            if (showNotif && !m_fields->m_isNotifying) {
+                m_fields->m_isNotifying = true;
+                
+                auto notif = Notification::create(customText, NotificationIcon::None, 0.5f);
+                // Resetear la bandera de spam cuando la notificación desaparezca
+                notif->setID("exit-notification");
+                notif->show();
+                
+                // Usamos un delay simple para permitir otra notificación después de medio segundo
+                Loader::get()->queueInMainThread([this]() {
+                    m_fields->m_isNotifying = false;
+                });
+            }
         }
     }
 };
