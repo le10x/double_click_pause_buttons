@@ -1,3 +1,5 @@
+## <cy>Double Click Exit</c>
+
 ### English
 This mod prevents accidentally exiting a level by double clicking in the exit button, especially useful for plats levels. Customization options are available in the settings...
 
