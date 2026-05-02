@@ -10,22 +10,17 @@
 	"version": "1.0.0",
 	"name": "Double Click Exit",
 	"developer": "le10x",
-	"description": "Prevents accidental exits by requiring a double click.",
+	"description": "Requires a double click to exit the pause menu.",
 	"settings": {
 		"enable-double-click": {
 			"name": "Enable Double Click",
 			"type": "bool",
 			"default": true
 		},
-		"game-mode": {
-			"name": "Game Mode",
-			"type": "enum",
-			"default": 0,
-			"options": [
-				"Both",
-				"Platformer Only",
-				"Normal Only"
-			]
+		"plat-only": {
+			"name": "Platformer Only",
+			"type": "bool",
+			"default": false
 		},
 		"show-notification": {
 			"name": "Show Notification",
