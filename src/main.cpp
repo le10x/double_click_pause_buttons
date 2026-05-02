@@ -10,17 +10,16 @@ class $modify(PauseDoubleClick, PauseLayer) {
         bool m_isNotifying = false;
     };
 
-    // Corregido para 2.2081
-    bool init(bool unfocused) {
-        return PauseLayer::init(unfocused);
-    }
-
     void onQuit(CCObject* sender) {
         auto mod = Mod::get();
+        
+        // Detectar modo de juego
         bool isPlat = false;
-        if (auto pl = PlayLayer::get()) isPlat = pl->m_level->isPlatformer();
+        if (auto pl = PlayLayer::get()) {
+            if (pl->m_level) isPlat = pl->m_level->isPlatformer();
+        }
 
-        // Filtros de activación
+        // Si el mod está apagado o estamos en modo normal y el usuario puso "Plat Only"
         if (!mod->getSettingValue<bool>("enable-double-click") || (mod->getSettingValue<bool>("plat-only") && !isPlat)) {
             PauseLayer::onQuit(sender);
             return;
@@ -28,9 +27,10 @@ class $modify(PauseDoubleClick, PauseLayer) {
 
         auto ahora = std::chrono::steady_clock::now();
         auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(ahora - m_fields->m_lastClick).count();
+        int64_t speedLimit = mod->getSettingValue<int64_t>("click-speed");
 
-        if (diff < mod->getSettingValue<int64_t>("click-speed")) {
-            // ÉXITO: Salir
+        if (diff < speedLimit) {
+            // SEGUNDO CLIC: Salir del nivel
             PauseLayer::onQuit(sender);
         } else {
             // PRIMER CLIC: Notificar y guardar tiempo
@@ -38,11 +38,20 @@ class $modify(PauseDoubleClick, PauseLayer) {
 
             if (mod->getSettingValue<bool>("show-notification") && !m_fields->m_isNotifying) {
                 m_fields->m_isNotifying = true;
-                Notification::create(mod->getSettingValue<std::string>("custom-text"), NotificationIcon::None, 0.8f)->show();
+                
+                Notification::create(
+                    mod->getSettingValue<std::string>("custom-text"), 
+                    NotificationIcon::None, 
+                    0.8f
+                )->show();
+                
+                // Anti-spam de notificaciones
                 this->scheduleOnce(schedule_selector(PauseDoubleClick::resetNotif), 1.0f);
             }
         }
     }
 
-    void resetNotif(float dt) { m_fields->m_isNotifying = false; }
+    void resetNotif(float dt) { 
+        m_fields->m_isNotifying = false; 
+    }
 };
