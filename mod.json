@@ -5,7 +5,7 @@
 		"android": "2.2081"
 	},
 	"id": "le10x.double_click_exit",
-	"version": "1.1.0",
+	"version": "1.0.0",
 	"name": "Double Click Exit",
 	"developer": "le10x",
 	"description": "Prevents accidental exits by requiring a double click on the exit button.",
