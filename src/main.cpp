@@ -14,11 +14,15 @@ class $modify(PauseDoubleClick, PauseLayer) {
         bool enableMod = Mod::get()->getSettingValue<bool>("enable-double-click");
         auto gameMode = Mod::get()->getSettingValue<std::string>("game-mode");
         
-        // Verificar si el nivel actual es plataforma
-        auto playLayer = PlayLayer::get();
-        bool isPlatformer = playLayer ? playLayer->m_levelSettings->m_isPlatformer : false;
+        // Forma segura de detectar Platformer en 2.2081
+        bool isPlatformer = false;
+        if (auto playLayer = PlayLayer::get()) {
+            if (playLayer->m_level) {
+                isPlatformer = playLayer->m_level->isPlatformer();
+            }
+        }
 
-        // Lógica de filtrado por modo de juego
+        // Lógica de filtrado
         bool shouldApply = false;
         if (gameMode == "both") shouldApply = true;
         else if (gameMode == "platformer" && isPlatformer) shouldApply = true;
@@ -34,7 +38,7 @@ class $modify(PauseDoubleClick, PauseLayer) {
         int speedLimit = std::clamp(Mod::get()->getSettingValue<int>("click-speed"), 0, 1000);
 
         if (diff < speedLimit) {
-            // Éxito: Se ejecuta después del doble clic (respeta el confirm exit de RobTop)
+            // Éxito: Doble clic verificado
             PauseLayer::onQuit(sender);
         } else {
             m_fields->m_lastClick = ahora;
@@ -42,15 +46,14 @@ class $modify(PauseDoubleClick, PauseLayer) {
             if (Mod::get()->getSettingValue<bool>("show-notification") && !m_fields->m_hasNotificationActive) {
                 m_fields->m_hasNotificationActive = true;
                 
-                auto notif = Notification::create(
+                Notification::create(
                     Mod::get()->getSettingValue<std::string>("custom-text"), 
                     NotificationIcon::None, 
                     1.0f
-                );
+                )->show();
                 
-                // Usamos un scheduler para resetear la bandera de spam cuando la notif desaparezca
+                // Usamos el scheduler de Cocos2d para limpiar la bandera después de 1 segundo
                 this->scheduleOnce(schedule_selector(PauseDoubleClick::resetNotifFlag), 1.0f);
-                notif->show();
             }
         }
     }
