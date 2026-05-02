@@ -10,30 +10,35 @@
 	"version": "1.0.0",
 	"name": "Double Click Exit",
 	"developer": "le10x",
-	"description": "Requires a double click to exit the pause menu.",
+	"description": "Prevents accidental exits by requiring a double click on the exit button.",
 	"settings": {
 		"enable-double-click": {
 			"name": "Enable Double Click",
+			"description": "Toggle the double click requirement on or off.",
 			"type": "bool",
 			"default": true
 		},
 		"plat-only": {
 			"name": "Platformer Only",
+			"description": "If enabled, the mod will only work in platformer levels.",
 			"type": "bool",
 			"default": false
 		},
 		"show-notification": {
 			"name": "Show Notification",
+			"description": "Show a visual message on the first click.",
 			"type": "bool",
 			"default": true
 		},
 		"custom-text": {
 			"name": "Custom Message",
+			"description": "The text that appears when you click the exit button once.",
 			"type": "string",
 			"default": "Click again to exit"
 		},
 		"click-speed": {
 			"name": "Click Speed (ms)",
+			"description": "The maximum time allowed between clicks (0 to 1000 milliseconds).",
 			"type": "int",
 			"default": 500,
 			"min": 0,
