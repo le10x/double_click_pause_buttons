@@ -2,7 +2,10 @@
 	"geode": "5.6.1",
 	"gd": {
 		"win": "2.2081",
-		"android": "2.2081"
+		"android": "2.2081",
+		"mac-intel": "2.2081",
+		"mac-arm": "2.2081",
+		"ios": "2.2081"
 	},
 	"id": "le10x.double_click_exit",
 	"version": "1.0.0",
