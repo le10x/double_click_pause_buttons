@@ -10,16 +10,26 @@ class $modify(PauseDoubleClick, PauseLayer) {
         bool m_isNotifying = false;
     };
 
-    // CORRECCIÓN: Ahora recibimos el parámetro 'unfocused'
     bool init(bool unfocused) {
-        // Pasamos el parámetro a la función original
         if (!PauseLayer::init(unfocused)) return false;
 
-        // Buscamos el botón de salir. En 2.2081 los IDs pueden variar, 
-        // así que lo buscamos de forma segura.
-        if (auto menu = this->getChildByID("left-button-menu")) {
-            if (auto exitBtn = static_cast<CCMenuItemSpriteExtra*>(menu->getChildByID("exit-button"))) {
-                exitBtn->setTarget(this, menu_selector(PauseDoubleClick::onCustomQuit));
+        // Buscamos en TODOS los menús del PauseLayer para encontrar el botón de Exit
+        // Recorremos los hijos del PauseLayer (this)
+        auto children = this->getChildren();
+        for (int i = 0; i < children->count(); ++i) {
+            if (auto menu = dynamic_cast<CCMenu*>(children->objectAtIndex(i))) {
+                // Ahora recorremos los botones dentro de cada menú
+                auto buttons = menu->getChildren();
+                for (int j = 0; j < buttons->count(); ++j) {
+                    if (auto btn = dynamic_cast<CCMenuItemSpriteExtra*>(buttons->objectAtIndex(j))) {
+                        
+                        // Si el botón está configurado para llamar a onQuit, lo secuestramos
+                        // Este es el método más seguro porque no depende de IDs que cambian
+                        if (btn->getTarget() == this) { 
+                            btn->setTarget(this, menu_selector(PauseDoubleClick::onCustomQuit));
+                        }
+                    }
+                }
             }
         }
         return true;
@@ -27,12 +37,14 @@ class $modify(PauseDoubleClick, PauseLayer) {
 
     void onCustomQuit(CCObject* sender) {
         auto mod = Mod::get();
-        bool isPlat = false;
         
-        if (auto playLayer = PlayLayer::get()) {
-            if (playLayer->m_level) isPlat = playLayer->m_level->isPlatformer();
+        // Detección de modo plataforma
+        bool isPlat = false;
+        if (auto pl = PlayLayer::get()) {
+            isPlat = pl->m_level->isPlatformer();
         }
 
+        // Lógica de filtrado
         if (!mod->getSettingValue<bool>("enable-double-click") || (mod->getSettingValue<bool>("plat-only") && !isPlat)) {
             PauseLayer::onQuit(sender);
             return;
@@ -40,10 +52,13 @@ class $modify(PauseDoubleClick, PauseLayer) {
 
         auto ahora = std::chrono::steady_clock::now();
         auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(ahora - m_fields->m_lastClick).count();
+        int64_t speedLimit = mod->getSettingValue<int64_t>("click-speed");
 
-        if (diff < mod->getSettingValue<int64_t>("click-speed")) {
+        if (diff < speedLimit) {
+            // SEGUNDO CLIC: Llamamos a la original (aquí saldrá la confirmación nativa)
             PauseLayer::onQuit(sender);
         } else {
+            // PRIMER CLIC
             m_fields->m_lastClick = ahora;
 
             if (mod->getSettingValue<bool>("show-notification") && !m_fields->m_isNotifying) {
