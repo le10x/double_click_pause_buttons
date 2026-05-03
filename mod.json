@@ -6,12 +6,12 @@
 		"mac": "2.2081",
 		"ios": "2.2081"
 	},
-	"id": "le10x.double_click_exit",
+	"id": "le10x.double_click",
 	"version": "1.0.0",
 	"name": "Double Click",
 	"developer": "le10x",
 	"description": "Double click to exit, restart or toggle practice mode.",
-	"repository": "https://github.com",
+	"repository": "https://github.com/le10x/double_click",
 	"tags": ["utility", "interface", "gameplay"],
 	"settings": {
 		"enable-double-click": {
@@ -22,25 +22,25 @@
 		},
 		"plat-only": {
 			"name": "Platformer Only",
-			"description": "Only active during plat levels.",
+			"description": "Use double click protection only in plats levels.",
 			"type": "bool",
 			"default": false
 		},
 		"show-notification": {
 			"name": "Show Notification",
-			"description": "Show a message on the first click.",
+			"description": "Show double click notification.",
 			"type": "bool",
 			"default": true
 		},
 		"custom-text": {
 			"name": "Text Notification",
-			"description": "The text that appears when you click a button once.",
+			"description": "You can add a custom notification text.",
 			"type": "string",
 			"default": "double click"
 		},
 		"click-speed": {
 			"name": "Click Speed (ms)",
-			"description": "Max time between clicks.",
+			"description": "You can choose the click speed.",
 			"type": "int",
 			"default": 500,
 			"min": 0,
