@@ -6,21 +6,21 @@ using namespace geode::prelude;
 
 class $modify(PauseDoubleClick, PauseLayer) {
     struct Fields {
-        // Tiempos independientes para cada accion
         std::chrono::steady_clock::time_point m_lastExit;
         std::chrono::steady_clock::time_point m_lastRestart;
         std::chrono::steady_clock::time_point m_lastPractice;
         bool m_isNotifying = false;
     };
 
-    // Funcion generica para manejar la logica de doble click
-    bool checkDoubleClick(std::chrono::steady_clock::time_point& lastTime, const std::string& customMsg) {
+    bool checkClick(std::chrono::steady_clock::time_point& lastTime) {
         auto mod = Mod::get();
         bool isPlat = false;
-        if (auto pl = PlayLayer::get()) isPlat = pl->m_level->isPlatformer();
+        if (auto pl = PlayLayer::get()) {
+            if (pl->m_level) isPlat = pl->m_level->isPlatformer();
+        }
 
         if (!mod->getSettingValue<bool>("enable-double-click") || (mod->getSettingValue<bool>("plat-only") && !isPlat)) {
-            return true; 
+            return true;
         }
 
         auto ahora = std::chrono::steady_clock::now();
@@ -32,7 +32,7 @@ class $modify(PauseDoubleClick, PauseLayer) {
         } else {
             if (mod->getSettingValue<bool>("show-notification") && !m_fields->m_isNotifying) {
                 m_fields->m_isNotifying = true;
-                Notification::create(customMsg, NotificationIcon::None, 0.8f)->show();
+                Notification::create(mod->getSettingValue<std::string>("custom-text"), NotificationIcon::None, 0.8f)->show();
                 this->scheduleOnce(schedule_selector(PauseDoubleClick::resetNotif), 1.0f);
             }
             return false;
@@ -40,18 +40,15 @@ class $modify(PauseDoubleClick, PauseLayer) {
     }
 
     void onQuit(CCObject* s) {
-        if (checkDoubleClick(m_fields->m_lastExit, Mod::get()->getSettingValue<std::string>("custom-text"))) 
-            PauseLayer::onQuit(s);
+        if (checkClick(m_fields->m_lastExit)) PauseLayer::onQuit(s);
     }
 
     void onRestart(CCObject* s) {
-        if (checkDoubleClick(m_fields->m_lastRestart, "Click again to restart")) 
-            PauseLayer::onRestart(s);
+        if (checkClick(m_fields->m_lastRestart)) PauseLayer::onRestart(s);
     }
 
     void onPracticeMode(CCObject* s) {
-        if (checkDoubleClick(m_fields->m_lastPractice, "Click again for practice")) 
-            PauseLayer::onPracticeMode(s);
+        if (checkClick(m_fields->m_lastPractice)) PauseLayer::onPracticeMode(s);
     }
 
     void resetNotif(float dt) { m_fields->m_isNotifying = false; }
