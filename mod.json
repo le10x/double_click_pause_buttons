@@ -7,40 +7,40 @@
 		"ios": "2.2081"
 	},
 	"id": "le10x.double_click_exit",
-	"version": "1.0.0",
-	"name": "Double Click Exit",
+	"version": "1.4.0",
+	"name": "Double Click",
 	"developer": "le10x",
-	"description": "Double click to exit the level.",
-	"repository": "https://github.com/le10x/double_click_exit",
+	"description": "Double click to exit, restart or toggle practice mode.",
+	"repository": "https://github.com",
 	"tags": ["utility", "interface", "gameplay"],
 	"settings": {
 		"enable-double-click": {
 			"name": "Enable Double Click",
-			"description": "Activate the double click setting.",
+			"description": "Activate the double click protection.",
 			"type": "bool",
 			"default": true
 		},
 		"plat-only": {
 			"name": "Platformer Only",
-			"description": "Only activate the double click setting if you are on plats levels.",
+			"description": "Only active during plat levels.",
 			"type": "bool",
 			"default": false
 		},
 		"show-notification": {
 			"name": "Show Notification",
-			"description": "A message to remind you to double click.",
+			"description": "Show a message on the first click.",
 			"type": "bool",
 			"default": true
 		},
 		"custom-text": {
 			"name": "Text Notification",
-			"description": "The text that appears when you click the exit button once.",
+			"description": "The text that appears when you click a button once.",
 			"type": "string",
-			"default": "Click again to exit"
+			"default": "double click"
 		},
 		"click-speed": {
 			"name": "Click Speed (ms)",
-			"description": "You can choose the double click time.",
+			"description": "Max time between clicks.",
 			"type": "int",
 			"default": 500,
 			"min": 0,
