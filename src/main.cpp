@@ -6,19 +6,24 @@ using namespace geode::prelude;
 
 class $modify(PauseDoubleClick, PauseLayer) {
     struct Fields {
+        // Tiempos independientes para cada grupo de acciones
         std::chrono::steady_clock::time_point m_lastExit;
         std::chrono::steady_clock::time_point m_lastRestart;
         std::chrono::steady_clock::time_point m_lastPractice;
-        bool m_isNotifying = false;
+        // Puntero para gestionar la notificacion activa
+        Notification* m_currentNotif = nullptr;
     };
 
+    // Logica central para validar el doble click
     bool checkClick(std::chrono::steady_clock::time_point& lastTime) {
         auto mod = Mod::get();
+        
         bool isPlat = false;
         if (auto pl = PlayLayer::get()) {
             if (pl->m_level) isPlat = pl->m_level->isPlatformer();
         }
 
+        // Filtros de activacion segun ajustes
         if (!mod->getSettingValue<bool>("enable-double-click") || (mod->getSettingValue<bool>("plat-only") && !isPlat)) {
             return true;
         }
@@ -28,17 +33,26 @@ class $modify(PauseDoubleClick, PauseLayer) {
         lastTime = ahora;
 
         if (diff < mod->getSettingValue<int64_t>("click-speed")) {
-            return true;
+            return true; // Doble click exitoso
         } else {
-            if (mod->getSettingValue<bool>("show-notification") && !m_fields->m_isNotifying) {
-                m_fields->m_isNotifying = true;
-                Notification::create(mod->getSettingValue<std::string>("custom-text"), NotificationIcon::None, 0.8f)->show();
-                this->scheduleOnce(schedule_selector(PauseDoubleClick::resetNotif), 1.0f);
+            // Primer click: Manejo de notificacion sin spam
+            if (mod->getSettingValue<bool>("show-notification")) {
+                if (m_fields->m_currentNotif) {
+                    m_fields->m_currentNotif->onClose(nullptr);
+                }
+                
+                m_fields->m_currentNotif = Notification::create(
+                    mod->getSettingValue<std::string>("custom-text"), 
+                    NotificationIcon::None, 
+                    0.8f
+                );
+                m_fields->m_currentNotif->show();
             }
             return false;
         }
     }
 
+    // Intercepcion de botones
     void onQuit(CCObject* s) {
         if (checkClick(m_fields->m_lastExit)) PauseLayer::onQuit(s);
     }
@@ -47,9 +61,15 @@ class $modify(PauseDoubleClick, PauseLayer) {
         if (checkClick(m_fields->m_lastRestart)) PauseLayer::onRestart(s);
     }
 
+    void onRestartFull(CCObject* s) {
+        if (checkClick(m_fields->m_lastRestart)) PauseLayer::onRestartFull(s);
+    }
+
     void onPracticeMode(CCObject* s) {
         if (checkClick(m_fields->m_lastPractice)) PauseLayer::onPracticeMode(s);
     }
 
-    void resetNotif(float dt) { m_fields->m_isNotifying = false; }
+    void onNormalMode(CCObject* s) {
+        if (checkClick(m_fields->m_lastPractice)) PauseLayer::onNormalMode(s);
+    }
 };
