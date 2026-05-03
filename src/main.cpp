@@ -9,12 +9,11 @@ class $modify(PauseDoubleClick, PauseLayer) {
         std::chrono::steady_clock::time_point m_lastExit;
         std::chrono::steady_clock::time_point m_lastRestart;
         std::chrono::steady_clock::time_point m_lastPractice;
-        Notification* m_currentNotif = nullptr;
+        bool m_isNotifying = false;
     };
 
     bool checkClick(std::chrono::steady_clock::time_point& lastTime) {
         auto mod = Mod::get();
-        
         bool isPlat = false;
         if (auto pl = PlayLayer::get()) {
             if (pl->m_level) isPlat = pl->m_level->isPlatformer();
@@ -31,19 +30,10 @@ class $modify(PauseDoubleClick, PauseLayer) {
         if (diff < mod->getSettingValue<int64_t>("click-speed")) {
             return true;
         } else {
-            if (mod->getSettingValue<bool>("show-notification")) {
-                // CORRECCION: Usamos removeFromParent para cerrar la notificacion previa de forma segura
-                if (m_fields->m_currentNotif) {
-                    m_fields->m_currentNotif->removeFromParentAndCleanup(true);
-                    m_fields->m_currentNotif = nullptr;
-                }
-                
-                m_fields->m_currentNotif = Notification::create(
-                    mod->getSettingValue<std::string>("custom-text"), 
-                    NotificationIcon::None, 
-                    0.8f
-                );
-                m_fields->m_currentNotif->show();
+            if (mod->getSettingValue<bool>("show-notification") && !m_fields->m_isNotifying) {
+                m_fields->m_isNotifying = true;
+                Notification::create(mod->getSettingValue<std::string>("custom-text"), NotificationIcon::None, 0.8f)->show();
+                this->scheduleOnce(schedule_selector(PauseDoubleClick::resetNotif), 1.0f);
             }
             return false;
         }
@@ -68,4 +58,6 @@ class $modify(PauseDoubleClick, PauseLayer) {
     void onNormalMode(CCObject* s) {
         if (checkClick(m_fields->m_lastPractice)) PauseLayer::onNormalMode(s);
     }
+
+    void resetNotif(float dt) { m_fields->m_isNotifying = false; }
 };
