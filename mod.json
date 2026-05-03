@@ -7,7 +7,7 @@
 		"ios": "2.2081"
 	},
 	"id": "le10x.double_click_exit",
-	"version": "1.4.0",
+	"version": "1.0.0",
 	"name": "Double Click",
 	"developer": "le10x",
 	"description": "Double click to exit, restart or toggle practice mode.",
