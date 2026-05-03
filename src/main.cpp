@@ -6,15 +6,12 @@ using namespace geode::prelude;
 
 class $modify(PauseDoubleClick, PauseLayer) {
     struct Fields {
-        // Tiempos independientes para cada grupo de acciones
         std::chrono::steady_clock::time_point m_lastExit;
         std::chrono::steady_clock::time_point m_lastRestart;
         std::chrono::steady_clock::time_point m_lastPractice;
-        // Puntero para gestionar la notificacion activa
         Notification* m_currentNotif = nullptr;
     };
 
-    // Logica central para validar el doble click
     bool checkClick(std::chrono::steady_clock::time_point& lastTime) {
         auto mod = Mod::get();
         
@@ -23,7 +20,6 @@ class $modify(PauseDoubleClick, PauseLayer) {
             if (pl->m_level) isPlat = pl->m_level->isPlatformer();
         }
 
-        // Filtros de activacion segun ajustes
         if (!mod->getSettingValue<bool>("enable-double-click") || (mod->getSettingValue<bool>("plat-only") && !isPlat)) {
             return true;
         }
@@ -33,12 +29,13 @@ class $modify(PauseDoubleClick, PauseLayer) {
         lastTime = ahora;
 
         if (diff < mod->getSettingValue<int64_t>("click-speed")) {
-            return true; // Doble click exitoso
+            return true;
         } else {
-            // Primer click: Manejo de notificacion sin spam
             if (mod->getSettingValue<bool>("show-notification")) {
+                // CORRECCION: Usamos removeFromParent para cerrar la notificacion previa de forma segura
                 if (m_fields->m_currentNotif) {
-                    m_fields->m_currentNotif->onClose(nullptr);
+                    m_fields->m_currentNotif->removeFromParentAndCleanup(true);
+                    m_fields->m_currentNotif = nullptr;
                 }
                 
                 m_fields->m_currentNotif = Notification::create(
@@ -52,7 +49,6 @@ class $modify(PauseDoubleClick, PauseLayer) {
         }
     }
 
-    // Intercepcion de botones
     void onQuit(CCObject* s) {
         if (checkClick(m_fields->m_lastExit)) PauseLayer::onQuit(s);
     }
