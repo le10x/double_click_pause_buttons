@@ -28,12 +28,12 @@
 		},
 		"show-notification": {
 			"name": "Show Notification",
-			"description": "A message to remind you to double-click.",
+			"description": "A message to remind you to double click.",
 			"type": "bool",
 			"default": true
 		},
 		"custom-text": {
-			"name": "Custom Message",
+			"name": "Text Notification",
 			"description": "The text that appears when you click the exit button once.",
 			"type": "string",
 			"default": "Click again to exit"
